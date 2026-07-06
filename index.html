@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MalasNoticias·AI — Simulador de comunicación de malas noticias (SPIKES)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F4F2EA; --panel:#FFFFFF; --ink:#14312F; --muted:#5E6B68;
+  --line:#E2DED0; --petrol:#0F4C47; --petrol-deep:#0A3532; --petrol-soft:#E4EEEC;
+  --amber:#C99000; --amber-soft:#FFF3D6; --green:#12796A; --green-soft:#DFF1ED;
+  --red:#D9573F; --red-deep:#B23B26; --red-soft:#FBE7E2;
+  --radius:14px; --shadow:0 1px 2px rgba(20,49,47,.05),0 8px 24px rgba(20,49,47,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 'Noto Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;letter-spacing:-.01em}
+code,.mono{font-family:'Noto Sans Mono',monospace}
+header{position:sticky;top:0;z-index:50;background:rgba(244,242,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.logo{font-family:'Space Grotesk';font-weight:700;font-size:19px;color:var(--petrol-deep)}
+.logo b{color:var(--red)}
+.tag{font-family:'Noto Sans Mono';font-size:11.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:2px 10px}
+.stepper{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.step{font-family:'Noto Sans Mono';font-size:11.5px;padding:4px 12px;border-radius:99px;border:1px solid var(--line);color:var(--muted);background:var(--panel)}
+.step.on{background:var(--petrol);border-color:var(--petrol);color:#fff}
+.step.done{background:var(--petrol-soft);border-color:var(--petrol-soft);color:var(--petrol)}
+main{max-width:1180px;margin:22px auto;padding:0 20px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media(max-width:940px){main{grid-template-columns:1fr}.col-side{order:2}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.panel-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-h h3{margin:0;font-size:16px}
+.eyebrow{font-family:'Noto Sans Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--petrol);background:var(--petrol-soft);border-radius:6px;padding:3px 8px}
+.panel-b{padding:18px}
+.field{margin-bottom:14px}
+.lab{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;color:var(--ink);background:#FCFBF7;outline:none}
+.inp:focus{border-color:var(--petrol);box-shadow:0 0 0 3px rgba(15,76,71,.12)}
+textarea.inp{min-height:74px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:640px){.row2,.row3{grid-template-columns:1fr}}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}
+.btn{border:none;border-radius:10px;padding:10px 16px;font:600 14px 'Noto Sans';cursor:pointer;transition:filter .15s,transform .05s}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--petrol);color:#fff}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-ghost{background:var(--petrol-soft);color:var(--petrol)}
+.btn-line{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-block{width:100%}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.banner{display:none;border-radius:10px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
+.banner.err{display:block;background:var(--red-soft);color:var(--red-deep)}
+.banner.ok{display:block;background:var(--green-soft);color:var(--green)}
+.adv{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.adv summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600}
+.notice{background:var(--amber-soft);border:1px solid #EFD9A0;border-radius:10px;padding:10px 14px;font-size:12.5px;color:#6E5200;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:none;background:var(--panel);color:var(--muted);font:600 12.5px 'Noto Sans';padding:7px 13px;cursor:pointer}
+.seg button.on{background:var(--petrol);color:#fff}
+.prog{font-family:'Noto Sans Mono';font-size:12.5px;color:var(--petrol);background:var(--petrol-soft);border-radius:8px;padding:8px 12px}
+.foot{max-width:1180px;margin:10px auto 40px;padding:0 20px;font-size:12px;color:var(--muted)}
+.foot code{font-size:11px}
+/* ─── Chat ─── */
+.chat{display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto;padding:4px 2px;scroll-behavior:smooth}
+.msg{max-width:82%;border-radius:14px;padding:10px 14px;font-size:14.5px;position:relative}
+.msg.al{align-self:flex-end;background:var(--petrol);color:#fff;border-bottom-right-radius:4px}
+.msg.pa{align-self:flex-start;background:#F3F1E8;border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg .who{font-family:'Noto Sans Mono';font-size:10px;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-bottom:3px}
+.msg.sys{align-self:center;background:var(--amber-soft);color:#6E5200;font-size:12.5px;border-radius:10px}
+.composer{display:flex;gap:8px;margin-top:14px;align-items:flex-end}
+.composer textarea{flex:1;min-height:46px;max-height:130px}
+.icobtn{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex:none}
+.icobtn.on{background:var(--red);border-color:var(--red);color:#fff}
+.icobtn:disabled{opacity:.4;cursor:not-allowed}
+/* estado manos libres */
+.hf-status{display:none;align-items:center;gap:8px;border-radius:99px;padding:5px 13px;font:500 12px 'Noto Sans Mono';margin-bottom:10px;width:fit-content}
+.hf-status .pip{width:9px;height:9px;border-radius:50%;flex:none}
+.hf-status.listening{display:flex;background:var(--red-soft);color:var(--red-deep)}.hf-status.listening .pip{background:var(--red);animation:pulse 1.1s infinite}
+.hf-status.thinking{display:flex;background:var(--amber-soft);color:#8A6400}.hf-status.thinking .pip{background:var(--amber)}
+.hf-status.speaking{display:flex;background:var(--green-soft);color:var(--green)}.hf-status.speaking .pip{background:var(--green)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* medidor emocional */
+.emo{margin-top:12px}
+.emo .lab-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.emo .track{height:9px;border-radius:99px;background:#EEECe2;background:#EEECE2;overflow:hidden}
+.emo .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));width:0%;transition:width .6s}
+.emo .name{font-weight:700;color:var(--ink)}
+/* rúbrica */
+.ph-block{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.ph-head{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#FAF8F1;border-bottom:1px solid var(--line)}
+.ph-head .ltr{font-family:'Space Grotesk';font-weight:700;font-size:17px;color:var(--petrol);width:26px}
+.ph-head h4{margin:0;font-size:14px;flex:1}
+.ph-head .sc{font-family:'Noto Sans Mono';font-size:12.5px;font-weight:600}
+.it{display:flex;gap:10px;padding:9px 14px;border-bottom:1px solid #F0EDE2;font-size:13.5px;align-items:flex-start}
+.it:last-child{border-bottom:none}
+.it .mark{flex:none;font-family:'Noto Sans Mono';font-size:11px;font-weight:600;border-radius:6px;padding:2px 7px;margin-top:1px}
+.mk2{background:var(--green-soft);color:var(--green)}
+.mk1{background:var(--amber-soft);color:#8A6400}
+.mk0{background:var(--red-soft);color:var(--red-deep)}
+.it .ev{display:block;font-size:12px;color:var(--muted);margin-top:2px;font-style:italic}
+.total-box{display:flex;align-items:baseline;gap:14px;background:var(--petrol);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:16px}
+.total-box .num{font-family:'Space Grotesk';font-size:34px;font-weight:700}
+.total-box .of{opacity:.75;font-size:13px}
+.hidden{display:none!important}
+.kv{font-size:13.5px;margin:0 0 8px}
+.kv b{color:var(--petrol-deep)}
+.side-list{list-style:none;margin:0;padding:0}
+.side-list li{padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.side-list li:last-child{border-bottom:none}
+.side-list .dt{font-family:'Noto Sans Mono';font-size:10.5px;color:var(--muted)}
+.linklike{background:none;border:none;color:var(--petrol);font:600 13px 'Noto Sans';cursor:pointer;padding:0;text-align:left}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand">
+      <span class="logo">MalasNoticias·<b>AI</b></span>
+      <span class="tag">SPIKES · simulación</span>
+    </div>
+    <div class="stepper" id="stepper">
+      <span class="step" data-ph="prep">1 · Preparar</span>
+      <span class="step" data-ph="conv">2 · Conversación</span>
+      <span class="step" data-ph="eval">3 · Evaluación</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="col-main">
+
+    <!-- ═══ F1 · Preparar ═══ -->
+    <section class="panel" id="prepPanel">
+      <div class="panel-h"><span class="eyebrow">Preparar</span><h3>Diseña el escenario</h3></div>
+      <div class="panel-b">
+        <div class="notice">Herramienta <b>formativa y de simulación</b>. No sustituye la práctica supervisada ni implica pacientes reales. Requiere revisión docente (human-in-the-loop).</div>
+        <div id="banner" class="banner"></div>
+        <div class="row3">
+          <div class="field">
+            <label class="lab">Contexto clínico</label>
+            <select class="inp" id="ctx">
+              <option>Oncología</option><option>Urgencias</option><option>UCI / crítico</option>
+              <option>Cuidados paliativos</option><option>Atención primaria</option>
+              <option>Rehabilitación / secuelas funcionales</option><option>Pie diabético / amputación</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lab">Interlocutor</label>
+            <select class="inp" id="inter">
+              <option value="paciente">Paciente</option>
+              <option value="familiar">Familiar</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lab">Perfil emocional</label>
+            <select class="inp" id="perfil">
+              <option value="aleatorio">Aleatorio</option>
+              <option>Contenido</option><option>Ansioso</option><option>En negación</option>
+              <option>Con ira</option><option>Desbordado</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="lab">Titulación</label>
+            <select class="inp" id="titu">
+              <option>Medicina</option><option>Enfermería</option><option>Fisioterapia</option>
+              <option>Terapia Ocupacional</option><option>Podología</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lab">Dificultad</label>
+            <select class="inp" id="dif">
+              <option value="1">Básica</option><option value="2" selected>Media</option><option value="3">Alta</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lab">Indicaciones opcionales para el caso</label>
+          <textarea class="inp" id="extra" placeholder="Ej.: paciente joven con hijos pequeños; recidiva tras remisión; barrera idiomática leve…"></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" id="genBtn">Generar escenario</button>
+        <div id="prepProg" class="prog" style="margin-top:12px;display:none"></div>
+
+        <details class="adv">
+          <summary>Ajustes avanzados (API)</summary>
+          <div class="row2" style="margin-top:12px">
+            <div class="field">
+              <label class="lab">OpenAI API Key</label>
+              <input class="inp" id="apiKey" type="password" placeholder="sk-…" autocomplete="off">
+              <div class="hint">Se guarda solo en tu navegador. Compartida entre las apps del portfolio.</div>
+            </div>
+            <div class="field">
+              <label class="lab">Modelo</label>
+              <select class="inp" id="model">
+                <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+              </select>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ═══ Escenario generado ═══ -->
+    <section class="panel hidden" id="casePanel">
+      <div class="panel-h">
+        <span class="eyebrow">Escenario</span><h3 id="caseTitle">Caso</h3>
+        <div class="seg" style="margin-left:auto" id="caseSeg">
+          <button data-v="alumno" class="on">Vista alumno</button>
+          <button data-v="docente">Hoja docente</button>
+        </div>
+      </div>
+      <div class="panel-b">
+        <div id="caseAlumno"></div>
+        <div id="caseDocente" class="hidden"></div>
+        <div class="toolbar">
+          <button class="btn btn-primary" id="startConv">Iniciar conversación</button>
+          <button class="btn btn-line" id="regen">Regenerar escenario</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ F2 · Conversación ═══ -->
+    <section class="panel hidden" id="convPanel">
+      <div class="panel-h">
+        <span class="eyebrow">Conversación</span><h3 id="convTitle">Encuentro</h3>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:center">
+            <input type="checkbox" id="ttsChk"> Voz del interlocutor
+          </label>
+          <label style="font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:center">
+            <input type="checkbox" id="hfChk"> Manos libres
+          </label>
+        </div>
+      </div>
+      <div class="panel-b">
+        <div class="hf-status" id="hfStatus"><span class="pip"></span><span id="hfTxt"></span></div>
+        <div class="chat" id="chat"></div>
+        <div class="emo">
+          <div class="lab-row"><span>Estado emocional: <span class="name" id="emoName">—</span></span><span id="emoPct">—</span></div>
+          <div class="track"><div class="fill" id="emoFill"></div></div>
+        </div>
+        <div class="composer">
+          <button class="icobtn" id="micBtn" title="Dictar (mantener conversación por voz)">🎙</button>
+          <textarea class="inp" id="userIn" placeholder="Habla con el paciente… (Enter para enviar, Mayús+Enter para salto de línea)"></textarea>
+          <button class="btn btn-primary" id="sendBtn" style="height:46px">Enviar</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-amber" id="finBtn">Finalizar y evaluar</button>
+          <button class="btn btn-line" id="newSim">Nueva simulación</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ F3 · Evaluación ═══ -->
+    <section class="panel hidden" id="evalPanel">
+      <div class="panel-h"><span class="eyebrow">Evaluación</span><h3>Rúbrica SPIKES</h3></div>
+      <div class="panel-b">
+        <div id="evalProg" class="prog" style="display:none;margin-bottom:12px"></div>
+        <div id="evalOut"></div>
+        <div class="toolbar" id="expBar" style="display:none">
+          <button class="btn btn-primary" id="dlWord">⬇ Informe (Word)</button>
+          <button class="btn btn-ghost" id="dlPdf">⬇ Informe (PDF)</button>
+          <button class="btn btn-line" id="again">Nueva simulación</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-side">
+    <div class="panel">
+      <div class="panel-h"><span class="eyebrow">Guía</span><h3>Cómo funciona</h3></div>
+      <div class="panel-b" style="font-size:13.5px;color:var(--muted)">
+        <p style="margin:0 0 10px">Simula la comunicación de una mala noticia siguiendo el protocolo <b style="color:var(--ink)">SPIKES</b>. La IA interpreta al paciente o familiar con reacciones emocionales realistas.</p>
+        <p style="margin:0 0 10px"><b style="color:var(--ink)">Setting · Perception · Invitation · Knowledge · Empathy · Strategy</b>: al finalizar, un evaluador puntúa cada fase con evidencias del diálogo. La nota se calcula de forma determinista en tu navegador.</p>
+        <p style="margin:0">Con <b style="color:var(--ink)">manos libres</b>, el ciclo escucha → piensa → habla se encadena solo (recomendado en Chrome de escritorio).</p>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span class="eyebrow">Historial</span><h3>Sesiones</h3></div>
+      <div class="panel-b">
+        <ul class="side-list" id="histList"><li style="color:var(--muted)">Sin sesiones guardadas.</li></ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="foot">MalasNoticias·AI — simulador SPIKES del portfolio · <code>vanilla HTML/JS · OpenAI · Web Speech API · docx.js · jsPDF · IndexedDB</code></div>
+
+<script>
+/* ═══ KERNEL ═══ */
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+const el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+const APP={id:'malasnoticias',version:1};
+const K_KEY='ia_openai_key';
+const K_CFG='mn_cfg_v1';
+
+const banner=(msg,cls)=>{const b=$('#banner');b.className='banner '+(cls||'err');b.textContent=msg;if(msg)b.style.display='block';};
+const clearBanner=()=>{$('#banner').style.display='none';};
+
+function getKey(){return ($('#apiKey').value||'').trim()||localStorage.getItem(K_KEY)||'';}
+function saveCfg(){
+  const key=($('#apiKey').value||'').trim();
+  if(key)localStorage.setItem(K_KEY,key);
+  localStorage.setItem(K_CFG,JSON.stringify({model:$('#model').value}));
+}
+(function loadCfg(){
+  const k=localStorage.getItem(K_KEY);if(k)$('#apiKey').value=k;
+  try{const c=JSON.parse(localStorage.getItem(K_CFG)||'{}');if(c.model)$('#model').value=c.model;}catch(e){}
+})();
+
+async function openai(messages,{json=true,temp=0.7,model=null,max=2000}={}){
+  const key=getKey();
+  if(!key)throw new Error('Falta la API Key. Ábrela en «Ajustes avanzados» y pégala (empieza por sk-…).');
+  saveCfg();
+  const body={model:model||$('#model').value,temperature:temp,max_tokens:max,messages};
+  if(json)body.response_format={type:'json_object'};
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify(body)
+  });
+  if(r.status===401)throw new Error('API Key no válida (401). Revísala en «Ajustes avanzados».');
+  if(!r.ok){const t=await r.text();throw new Error('Error de la API ('+r.status+'): '+t.slice(0,180));}
+  const d=await r.json();
+  const txt=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'';
+  if(!json)return txt;
+  try{return JSON.parse(txt.replace(/```json|```/g,'').trim());}
+  catch(e){throw new Error('La IA no devolvió JSON válido. Vuelve a intentarlo.');}
+}
+
+function setFase(f){
+  $$('#stepper .step').forEach(s=>{
+    s.classList.remove('on','done');
+    const order=['prep','conv','eval'];
+    const i=order.indexOf(s.dataset.ph),j=order.indexOf(f);
+    if(i===j)s.classList.add('on');else if(i<j)s.classList.add('done');
+  });
+}
+setFase('prep');
+
+/* ═══ IndexedDB (historial) ═══ */
+let db=null;
+(function initDB(){
+  const req=indexedDB.open('mn_ai_db',1);
+  req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('sesiones'))d.createObjectStore('sesiones',{keyPath:'id'});};
+  req.onsuccess=e=>{db=e.target.result;renderHist();};
+})();
+function dbPut(s){if(!db)return;db.transaction('sesiones','readwrite').objectStore('sesiones').put(s);}
+function dbAll(cb){if(!db)return cb([]);const out=[];const c=db.transaction('sesiones').objectStore('sesiones').openCursor();
+  c.onsuccess=e=>{const cur=e.target.result;if(cur){out.push(cur.value);cur.continue();}else cb(out.sort((a,b)=>b.ts-a.ts));};}
+function renderHist(){
+  dbAll(list=>{
+    const ul=$('#histList');ul.innerHTML='';
+    if(!list.length){const li=el('li');li.style.color='var(--muted)';li.textContent='Sin sesiones guardadas.';ul.appendChild(li);return;}
+    list.slice(0,8).forEach(s=>{
+      const li=el('li');
+      const btn=el('button','linklike');btn.textContent=(s.caso&&s.caso.titulo?s.caso.titulo:'Sesión')+(s.nota!=null?' · '+s.nota+'/100':'');
+      btn.onclick=()=>loadSession(s);
+      const dt=el('span','dt');dt.textContent=new Date(s.ts).toLocaleDateString('es-ES');
+      li.appendChild(btn);li.appendChild(dt);ul.appendChild(li);
+    });
+  });
+}
+
+/* ═══ Estado de la simulación ═══ */
+let S={caso:null,chat:[],emo:{nombre:'—',intensidad:0},rubrica:null,nota:null,id:null,ts:null,cerrada:false};
+
+/* ═══ F1 · Generación del escenario ═══ */
+const GEN_SYS=`Eres diseñador de escenarios de simulación clínica para entrenar la comunicación de malas noticias (protocolo SPIKES) en universidades españolas. Creas casos realistas, verosímiles y pedagógicamente ricos, adaptados a la titulación indicada. Respondes SOLO con JSON válido, sin markdown, con esta estructura exacta:
+{
+ "titulo": "string corto",
+ "mala_noticia": "la noticia concreta que el alumno debe comunicar",
+ "informe_clinico": "informe breve (5-8 líneas) con los datos clínicos que el alumno conoce ANTES del encuentro: historia, pruebas, resultados, pronóstico orientativo",
+ "objetivo_docente": "qué debe practicar el alumno en este caso",
+ "hoja_actor": {
+   "nombre": "string", "edad": number, "rol": "paciente|familiar",
+   "situacion": "contexto vital y familiar",
+   "conocimiento_previo": "qué sabe o sospecha antes del encuentro",
+   "emocion_inicial": "string",
+   "perfil_emocional": "string",
+   "gatillos": ["2-4 cosas que empeoran su reacción"],
+   "calmantes": ["2-4 actitudes del profesional que le ayudan"]
+ }
+}`;
+
+$('#genBtn').onclick=generateCase;
+$('#regen').onclick=generateCase;
+
+async function generateCase(){
+  clearBanner();
+  const prog=$('#prepProg');prog.style.display='block';prog.textContent='Generando escenario…';
+  $('#genBtn').disabled=true;
+  try{
+    const perfil=$('#perfil').value==='aleatorio'?'elige tú uno variado y coherente':$('#perfil').value;
+    const user=`Titulación: ${$('#titu').value}. Contexto clínico: ${$('#ctx').value}. Interlocutor: ${$('#inter').value}. Perfil emocional: ${perfil}. Dificultad (1 básica – 3 alta): ${$('#dif').value}. Indicaciones extra: ${($('#extra').value||'ninguna')}. La mala noticia y el caso deben ser propios del ámbito competencial de la titulación.`;
+    const caso=await openai([{role:'system',content:GEN_SYS},{role:'user',content:user}],{temp:0.9,max:1400});
+    S={caso,chat:[],emo:{nombre:caso.hoja_actor.emocion_inicial||'—',intensidad:30},rubrica:null,nota:null,id:'s'+Date.now(),ts:Date.now(),cerrada:false};
+    renderCase();
+    $('#casePanel').classList.remove('hidden');
+    $('#casePanel').scrollIntoView({behavior:'smooth'});
+  }catch(e){banner(e.message);}
+  prog.style.display='none';$('#genBtn').disabled=false;
+}
+
+function renderCase(){
+  const c=S.caso,a=c.hoja_actor;
+  $('#caseTitle').textContent=c.titulo;
+  $('#caseAlumno').innerHTML=
+    `<p class="kv"><b>Tu papel:</b> profesional de ${esc($('#titu').value)} que debe comunicar una mala noticia a ${a.rol==='familiar'?'un familiar':'el/la paciente'} (${esc(a.nombre)}, ${a.edad} años).</p>`+
+    `<p class="kv"><b>Informe clínico disponible:</b><br>${esc(c.informe_clinico)}</p>`+
+    `<p class="kv"><b>Objetivo docente:</b> ${esc(c.objetivo_docente)}</p>`;
+  $('#caseDocente').innerHTML=
+    `<p class="kv"><b>Mala noticia a comunicar:</b> ${esc(c.mala_noticia)}</p>`+
+    `<p class="kv"><b>Situación:</b> ${esc(a.situacion)}</p>`+
+    `<p class="kv"><b>Conocimiento previo:</b> ${esc(a.conocimiento_previo)}</p>`+
+    `<p class="kv"><b>Perfil emocional:</b> ${esc(a.perfil_emocional)} · <b>Emoción inicial:</b> ${esc(a.emocion_inicial)}</p>`+
+    `<p class="kv"><b>Gatillos:</b> ${(a.gatillos||[]).map(esc).join(' · ')}</p>`+
+    `<p class="kv"><b>Le ayuda:</b> ${(a.calmantes||[]).map(esc).join(' · ')}</p>`;
+}
+$('#caseSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  $$('#caseSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#caseAlumno').classList.toggle('hidden',b.dataset.v!=='alumno');
+  $('#caseDocente').classList.toggle('hidden',b.dataset.v!=='docente');
+});
+function esc(x){return String(x==null?'':x).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+/* ═══ F2 · Conversación ═══ */
+$('#startConv').onclick=()=>{
+  $('#convPanel').classList.remove('hidden');
+  $('#convTitle').textContent='Encuentro con '+S.caso.hoja_actor.nombre;
+  setFase('conv');
+  if(!S.chat.length)addMsg('sys','El encuentro comienza. '+S.caso.hoja_actor.nombre+' te espera. Empieza tú la conversación.');
+  $('#convPanel').scrollIntoView({behavior:'smooth'});
+  $('#userIn').focus();
+};
+
+function addMsg(role,text){
+  const chat=$('#chat');
+  const m=el('div','msg '+(role==='al'?'al':role==='pa'?'pa':'sys'));
+  if(role!=='sys'){const w=el('div','who');w.textContent=role==='al'?'Tú':S.caso.hoja_actor.nombre;m.appendChild(w);}
+  const t=el('div');t.textContent=text;m.appendChild(t);
+  chat.appendChild(m);chat.scrollTop=chat.scrollHeight;
+}
+
+function pacienteSys(){
+  const a=S.caso.hoja_actor;
+  return `Eres ${a.nombre}, ${a.edad} años, ${a.rol} en una simulación de comunicación de malas noticias. Situación: ${a.situacion}. Sabes/sospechas: ${a.conocimiento_previo}. Perfil emocional: ${a.perfil_emocional}. Emoción actual: ${S.emo.nombre} (intensidad ${S.emo.intensidad}/100). Gatillos que te alteran: ${(a.gatillos||[]).join('; ')}. Te calma: ${(a.calmantes||[]).join('; ')}.
+Reglas: mantente SIEMPRE en el papel; NO conoces el contenido de la mala noticia hasta que el profesional te lo comunique; reacciona de forma humana y coherente con tu perfil (puedes preguntar, callar, llorar, enfadarte); tus respuestas son breves (1-4 frases), lenguaje coloquial español; nunca evalúas ni das consejos docentes; si el profesional usa jerga, muestra confusión; si es empático y claro, tu intensidad baja; si es brusco o toca un gatillo, sube.
+Responde SOLO con JSON: {"respuesta":"lo que dices en voz alta","emocion":"una palabra (p.ej. miedo, tristeza, ira, alivio, shock, calma)","intensidad": number 0-100}`;
+}
+
+async function sendTurn(text){
+  if(!text.trim()||S.cerrada)return;
+  addMsg('al',text);
+  S.chat.push({role:'alumno',text});
+  $('#userIn').value='';
+  setHF('thinking','Pensando…');
+  $('#sendBtn').disabled=true;
+  try{
+    const hist=S.chat.slice(-16).map(m=>({role:m.role==='alumno'?'user':'assistant',content:m.text}));
+    const out=await openai([{role:'system',content:pacienteSys()},...hist],{temp:0.85,max:400});
+    const reply=out.respuesta||'…';
+    S.emo={nombre:out.emocion||S.emo.nombre,intensidad:Math.max(0,Math.min(100,Number(out.intensidad)||S.emo.intensidad))};
+    S.chat.push({role:'paciente',text:reply});
+    addMsg('pa',reply);
+    renderEmo();
+    dbPut(snapshot());
+    if($('#ttsChk').checked||hf.on)speak(reply);
+    else if(hf.on)hfListen();
+  }catch(e){
+    addMsg('sys','⚠ '+e.message);
+    hfStop();
+  }
+  $('#sendBtn').disabled=false;
+  if(!hf.on)$('#userIn').focus();
+}
+function renderEmo(){
+  $('#emoName').textContent=S.emo.nombre;
+  $('#emoPct').textContent=S.emo.intensidad+'/100';
+  $('#emoFill').style.width=S.emo.intensidad+'%';
+}
+$('#sendBtn').onclick=()=>sendTurn($('#userIn').value);
+$('#userIn').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendTurn($('#userIn').value);}
+});
+
+/* ═══ Voz: STT + TTS + manos libres ═══ */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,recActive=false;
+const hf={on:false,watchdog:null};
+
+function setHF(state,txt){
+  const s=$('#hfStatus');
+  s.className='hf-status'+(state?' '+state:'');
+  $('#hfTxt').textContent=txt||'';
+  if(!state)s.style.display='none';
+}
+function speak(text){
+  if(!('speechSynthesis'in window)){if(hf.on)hfListen();return;}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='es-ES';u.rate=1.02;
+  const voices=speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.startsWith('es'));
+  if(voices.length)u.voice=voices[0];
+  setHF('speaking','Hablando '+S.caso.hoja_actor.nombre+'…');
+  clearTimeout(hf.watchdog);
+  // Watchdog: Chrome a veces no dispara onend en textos largos
+  const est=Math.max(6000,text.split(/\s+/).length*450);
+  hf.watchdog=setTimeout(()=>{if(hf.on)hfListen();else setHF(null);},est);
+  u.onend=()=>{clearTimeout(hf.watchdog);if(hf.on)hfListen();else setHF(null);};
+  u.onerror=()=>{clearTimeout(hf.watchdog);if(hf.on)hfListen();else setHF(null);};
+  speechSynthesis.speak(u);
+}
+function buildRec(){
+  if(!SR)return null;
+  const r=new SR();
+  r.lang='es-ES';r.interimResults=false;r.maxAlternatives=1;r.continuous=false;
+  r.onresult=e=>{
+    const t=e.results[0][0].transcript.trim();
+    recActive=false;
+    if(t)sendTurn(t);
+    else if(hf.on)hfListen();
+  };
+  r.onerror=e=>{
+    recActive=false;
+    if(e.error==='no-speech'&&hf.on){hfListen();return;}
+    if(e.error==='not-allowed'){addMsg('sys','⚠ Micrófono bloqueado por el navegador.');hfStop();$('#micBtn').classList.remove('on');setHF(null);return;}
+    if(hf.on)hfListen();else{$('#micBtn').classList.remove('on');setHF(null);}
+  };
+  r.onend=()=>{recActive=false;if(!hf.on){$('#micBtn').classList.remove('on');if(!speechSynthesis.speaking)setHF(null);}};
+  return r;
+}
+function hfListen(){
+  if(!hf.on||S.cerrada)return;
+  if(!rec)rec=buildRec();
+  if(!rec){addMsg('sys','⚠ Este navegador no soporta reconocimiento de voz (usa Chrome de escritorio).');hfStop();return;}
+  if(recActive)return;
+  setHF('listening','Escuchando… habla cuando quieras');
+  try{recActive=true;rec.start();}catch(e){recActive=false;}
+}
+function hfStop(){
+  hf.on=false;$('#hfChk').checked=false;
+  clearTimeout(hf.watchdog);
+  if(rec&&recActive){try{rec.stop();}catch(e){}}
+  recActive=false;
+  speechSynthesis.cancel();
+  setHF(null);
+}
+$('#hfChk').addEventListener('change',e=>{
+  if(e.target.checked){
+    if(!SR){addMsg('sys','⚠ Sin soporte de voz en este navegador (recomendado Chrome de escritorio).');e.target.checked=false;return;}
+    hf.on=true;
+    $('#ttsChk').checked=true; // manos libres fuerza la voz del interlocutor
+    addMsg('sys','Modo manos libres activo: escucha → envía → habla → escucha. El icono 🎙 actúa como stop.');
+    hfListen();
+  }else hfStop();
+});
+$('#micBtn').onclick=()=>{
+  if(hf.on){hfStop();return;}
+  if(!rec)rec=buildRec();
+  if(!rec){addMsg('sys','⚠ Sin soporte de reconocimiento de voz en este navegador.');return;}
+  if(recActive){try{rec.stop();}catch(e){}$('#micBtn').classList.remove('on');setHF(null);return;}
+  $('#micBtn').classList.add('on');
+  setHF('listening','Escuchando…');
+  try{recActive=true;rec.start();}catch(e){recActive=false;}
+};
+
+$('#newSim').onclick=resetAll;
+$('#again').onclick=resetAll;
+function resetAll(){
+  hfStop();
+  S={caso:null,chat:[],emo:{nombre:'—',intensidad:0},rubrica:null,nota:null,id:null,ts:null,cerrada:false};
+  $('#chat').innerHTML='';$('#evalOut').innerHTML='';
+  $('#casePanel').classList.add('hidden');$('#convPanel').classList.add('hidden');$('#evalPanel').classList.add('hidden');
+  $('#expBar').style.display='none';
+  setFase('prep');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ═══ F3 · Evaluación SPIKES (puntuación determinista en cliente) ═══ */
+const RUBRICA=[
+ {ltr:'S',nombre:'Setting · Preparar el entorno',peso:10,items:[
+   {id:'s1',txt:'Se presenta e identifica su rol'},
+   {id:'s2',txt:'Cuida el marco del encuentro (privacidad, sentarse, sin prisas) o lo verbaliza'},
+   {id:'s3',txt:'Comprueba acompañamiento o con quién quiere estar el interlocutor'}]},
+ {ltr:'P',nombre:'Perception · Explorar qué sabe',peso:15,items:[
+   {id:'p1',txt:'Pregunta qué sabe o sospecha antes de informar'},
+   {id:'p2',txt:'Escucha la percepción sin corregir bruscamente'}]},
+ {ltr:'I',nombre:'Invitation · Cuánto quiere saber',peso:10,items:[
+   {id:'i1',txt:'Pregunta cuánto detalle desea recibir'},
+   {id:'i2',txt:'Respeta el ritmo y la disposición del interlocutor'}]},
+ {ltr:'K',nombre:'Knowledge · Dar la información',peso:25,items:[
+   {id:'k1',txt:'Emite un aviso previo («warning shot») antes de la noticia'},
+   {id:'k2',txt:'Comunica la noticia con claridad, sin eufemismos excesivos ni jerga'},
+   {id:'k3',txt:'Dosifica la información en fragmentos pequeños'},
+   {id:'k4',txt:'Comprueba la comprensión'}]},
+ {ltr:'E',nombre:'Empathy · Responder a la emoción',peso:25,items:[
+   {id:'e1',txt:'Reconoce y nombra la emoción del interlocutor'},
+   {id:'e2',txt:'Ofrece respuestas empáticas explícitas (validación, apoyo)'},
+   {id:'e3',txt:'Permite la expresión emocional sin interrumpir ni minimizar'},
+   {id:'e4',txt:'Evita falsas esperanzas o promesas que no puede cumplir'}]},
+ {ltr:'S',nombre:'Strategy · Plan y cierre',peso:15,items:[
+   {id:'g1',txt:'Resume lo hablado'},
+   {id:'g2',txt:'Propone próximos pasos o plan concreto'},
+   {id:'g3',txt:'Ofrece disponibilidad y seguimiento, y comprueba dudas finales'}]}
+];
+
+$('#finBtn').onclick=evaluar;
+async function evaluar(){
+  if(S.chat.filter(m=>m.role==='alumno').length<2){addMsg('sys','⚠ La conversación es demasiado corta para evaluarla.');return;}
+  hfStop();S.cerrada=true;
+  $('#evalPanel').classList.remove('hidden');setFase('eval');
+  const prog=$('#evalProg');prog.style.display='block';prog.textContent='Evaluando la conversación con la rúbrica SPIKES…';
+  $('#evalPanel').scrollIntoView({behavior:'smooth'});
+  try{
+    const items=RUBRICA.flatMap(f=>f.items.map(i=>({id:i.id,texto:i.txt})));
+    const sys=`Eres evaluador docente experto en comunicación clínica (protocolo SPIKES). Analizas la transcripción de una simulación y puntúas ítems observables SOLO según lo que hizo el ALUMNO (rol "alumno"). Escala por ítem: 2 = logrado con claridad, 1 = parcial, 0 = ausente. Añade una evidencia literal breve (cita del alumno) o "—" si es 0. Sé exigente pero justo. Responde SOLO con JSON:
+{"items":[{"id":"...","puntos":0|1|2,"evidencia":"..."}],"feedback_global":"3-5 frases de feedback formativo","mejoras":["3 sugerencias concretas"]}
+Ítems a puntuar: ${JSON.stringify(items)}`;
+    const trans=S.chat.map(m=>(m.role==='alumno'?'ALUMNO: ':'INTERLOCUTOR: ')+m.text).join('\n');
+    const out=await openai([{role:'system',content:sys},{role:'user',content:'Caso: '+S.caso.mala_noticia+'\n\nTranscripción:\n'+trans}],{temp:0.2,max:1800});
+    // Puntuación determinista en cliente
+    const byId={};(out.items||[]).forEach(i=>{byId[i.id]={p:Math.max(0,Math.min(2,Number(i.puntos)||0)),ev:i.evidencia||'—'};});
+    let total=0;
+    const fases=RUBRICA.map(f=>{
+      const its=f.items.map(i=>({...i,p:(byId[i.id]||{p:0}).p,ev:(byId[i.id]||{ev:'—'}).ev}));
+      const raw=its.reduce((a,i)=>a+i.p,0);
+      const pct=raw/(2*its.length);
+      const sc=pct*f.peso;
+      total+=sc;
+      return {...f,its,sc:Math.round(sc*10)/10,pct};
+    });
+    S.rubrica={fases,feedback:out.feedback_global||'',mejoras:out.mejoras||[]};
+    S.nota=Math.round(total);
+    renderEval();
+    dbPut(snapshot());renderHist();
+  }catch(e){$('#evalOut').innerHTML='<div class="banner err" style="display:block">'+esc(e.message)+'</div>';}
+  prog.style.display='none';
+}
+
+function renderEval(){
+  const r=S.rubrica;
+  let h=`<div class="total-box"><span class="num">${S.nota}</span><span class="of">/ 100 · rúbrica SPIKES</span></div>`;
+  r.fases.forEach(f=>{
+    h+=`<div class="ph-block"><div class="ph-head"><span class="ltr">${f.ltr}</span><h4>${esc(f.nombre)}</h4><span class="sc">${f.sc} / ${f.peso}</span></div>`;
+    f.its.forEach(i=>{
+      h+=`<div class="it"><span class="mark mk${i.p}">${i.p}/2</span><div>${esc(i.txt)}${i.ev&&i.ev!=='—'?`<span class="ev">«${esc(i.ev)}»</span>`:''}</div></div>`;
+    });
+    h+='</div>';
+  });
+  h+=`<div class="panel" style="margin:0 0 14px"><div class="panel-b"><p class="kv"><b>Feedback global:</b> ${esc(r.feedback)}</p><p class="kv"><b>Para mejorar:</b></p>${r.mejoras.map(m=>'<p class="kv">→ '+esc(m)+'</p>').join('')}</div></div>`;
+  $('#evalOut').innerHTML=h;
+  $('#expBar').style.display='flex';
+}
+
+function snapshot(){return {id:S.id,ts:S.ts,caso:S.caso,chat:S.chat,emo:S.emo,rubrica:S.rubrica,nota:S.nota,config:{titu:$('#titu').value,ctx:$('#ctx').value}};}
+function loadSession(s){
+  hfStop();
+  S={...s,cerrada:!!s.rubrica};
+  renderCase();
+  $('#casePanel').classList.remove('hidden');
+  $('#convPanel').classList.remove('hidden');
+  $('#convTitle').textContent='Encuentro con '+S.caso.hoja_actor.nombre;
+  $('#chat').innerHTML='';
+  S.chat.forEach(m=>addMsg(m.role==='alumno'?'al':'pa',m.text));
+  renderEmo();
+  if(S.rubrica){ $('#evalPanel').classList.remove('hidden');renderEval();setFase('eval'); }
+  else{$('#evalPanel').classList.add('hidden');setFase('conv');}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ═══ Export Word + PDF ═══ */
+function informeLineas(){
+  const L=[];
+  L.push(['h1','Informe de simulación — MalasNoticias·AI (SPIKES)']);
+  L.push(['p','Fecha: '+new Date(S.ts).toLocaleString('es-ES')+' · Titulación: '+$('#titu').value+' · Nota: '+S.nota+'/100']);
+  L.push(['h2','Escenario']);
+  L.push(['p','Caso: '+S.caso.titulo]);
+  L.push(['p','Mala noticia: '+S.caso.mala_noticia]);
+  L.push(['p','Interlocutor: '+S.caso.hoja_actor.nombre+' ('+S.caso.hoja_actor.rol+', '+S.caso.hoja_actor.edad+' años)']);
+  L.push(['h2','Rúbrica SPIKES']);
+  S.rubrica.fases.forEach(f=>{
+    L.push(['h3',f.ltr+' · '+f.nombre+' — '+f.sc+' / '+f.peso]);
+    f.its.forEach(i=>L.push(['p','['+i.p+'/2] '+i.txt+(i.ev&&i.ev!=='—'?' — «'+i.ev+'»':'')]));
+  });
+  L.push(['h2','Feedback']);
+  L.push(['p',S.rubrica.feedback]);
+  S.rubrica.mejoras.forEach(m=>L.push(['p','→ '+m]));
+  L.push(['h2','Transcripción']);
+  S.chat.forEach(m=>L.push(['p',(m.role==='alumno'?'ALUMNO: ':S.caso.hoja_actor.nombre.toUpperCase()+': ')+m.text]));
+  return L;
+}
+$('#dlWord').onclick=async()=>{
+  if(!S.rubrica)return;
+  const {Document,Packer,Paragraph,HeadingLevel,TextRun}=docx;
+  const kids=informeLineas().map(([t,x])=>{
+    if(t==='h1')return new Paragraph({text:x,heading:HeadingLevel.TITLE});
+    if(t==='h2')return new Paragraph({text:x,heading:HeadingLevel.HEADING_1,spacing:{before:240}});
+    if(t==='h3')return new Paragraph({text:x,heading:HeadingLevel.HEADING_2,spacing:{before:160}});
+    return new Paragraph({children:[new TextRun({text:x,size:22})],spacing:{after:60}});
+  });
+  const doc=new Document({sections:[{children:kids}]});
+  const blob=await Packer.toBlob(doc);
+  dl(blob,'MalasNoticiasAI_informe.docx');
+};
+$('#dlPdf').onclick=()=>{
+  if(!S.rubrica)return;
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({unit:'mm',format:'a4'});
+  const W=pdf.internal.pageSize.getWidth()-28;let y=18;
+  informeLineas().forEach(([t,x])=>{
+    const size=t==='h1'?16:t==='h2'?13:t==='h3'?11.5:10;
+    pdf.setFont('helvetica',t==='p'?'normal':'bold');pdf.setFontSize(size);
+    const lines=pdf.splitTextToSize(x,W);
+    lines.forEach(ln=>{
+      if(y>282){pdf.addPage();y=18;}
+      pdf.text(ln,14,y);y+=size*0.5;
+    });
+    y+=t==='p'?1.5:3;
+  });
+  pdf.save('MalasNoticiasAI_informe.pdf');
+};
+function dl(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+</script>
+</body>
+</html>
